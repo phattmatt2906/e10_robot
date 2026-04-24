@@ -132,28 +132,55 @@ void Move(){
 The GOBEACON main program essentially sets up all the configuration variables and repeatedly
 execute the three routines: Read_PD, find_max, and move.*/
 task main(){
-	freq = 0; // 0 = 1khz (red) 1 = 10khz (green)
-	ambient_level = 200; // used in 'move'
-	slow_level = 5000;// used in move
-	stop_level = 6000;//used in move
-	expose_time = 5; // expose time was changed from 3ms to 5ms (3ms in easyC -> 5ms in RobotC)
-	steer_sensitivity = 20;//used in move
-	forward_speed = 35;//forward speed , used in move
-	slow_speed = 25;//slow speed , used in move
-	spin_speed = 50;//spin speed (for searching mode),used in move
-	SensorValue[digital10] = freq;// turn to 1KHz(red beacon)
+	// Shared config
+	ambient_level = 200;
+	slow_level = 5000;
+	stop_level = 6000;
+	expose_time = 5;
+	steer_sensitivity = 20;
+	forward_speed = 35;
+	slow_speed = 25;
+	spin_speed = 50;
+
+	// --- Phase 1: Find RED beacon (1kHz) ---
+	freq = 0;
+	SensorValue[digital10] = freq;
 
 	while(true){
-		
 		if(SensorValue[limitswitch] == 1){
 			stopMotor(leftMotor);
 			stopMotor(rightMotor);
 			break;
 		}
-	
-	
+		ReadPD();
+		Find_max();
+		Move();
+	}
+
+	// Brief pause before switching targets
+	delay(500);
+
+	// Back up slightly to clear the limit switch
+	motor[port1] = -30;
+	motor[port10] = -30;
+	delay(400);
+	motor[port1] = 0;
+	motor[port10] = 0;
+	delay(200);
+
+	// --- Phase 2: Find GREEN beacon (10kHz) ---
+	freq = 1;
+	SensorValue[digital10] = freq;
+
+	while(true){
+		if(SensorValue[limitswitch] == 1){
+			stopMotor(leftMotor);
+			stopMotor(rightMotor);
+			break;
+		}
 		ReadPD();
 		Find_max();
 		Move();
 	}
 }
+
