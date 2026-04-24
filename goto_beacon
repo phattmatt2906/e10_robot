@@ -156,7 +156,17 @@ task main(){
 		Find_max();
 		Move();
 	}
-
+while(SensorValue[limitswitch]==1&&PD_sum > slow_level){
+		motor[port7]=-127;
+		wait1Msec(1000);
+		motor[port7]=127;
+		wait1Msec(1000);
+		ReadPD();
+		Find_max();
+		if(PD_sum <= slow_level){
+			break;
+		}
+	}
 	// Brief pause before switching targets
 	delay(500);
 
