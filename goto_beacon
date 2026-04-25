@@ -195,4 +195,27 @@ task main(){
 		Find_max();
 		Move();
 	}
+
+	// --- Phase 3: Exit the Arena ---
+
+	#define OPENING_THRESHOLD 275
+	#define DRIVE_SPEED       50
+	#define SPIN_SPEED        30
+	#define EXIT_DRIVE_MS     2000  // drive forward for 2s once opening found
+
+	while(true){
+    	if(SensorValue[SonicSensor] >= OPENING_THRESHOLD){
+        	// Opening detected — drive straight through
+      	  motor[port1]  = DRIVE_SPEED;
+      	  motor[port10] = -(DRIVE_SPEED);
+      	  wait1Msec(EXIT_DRIVE_MS);
+      	  motor[port1]  = 0;
+      	  motor[port10] = 0;
+      	  break;  // done
+    	} else {
+        	// Wall ahead — spin to search for opening
+        	motor[port1]  =  SPIN_SPEED;
+			motor[port10] = SPIN_SPEED;
+		}
+    }
 }	
