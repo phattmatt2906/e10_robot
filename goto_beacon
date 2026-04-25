@@ -1,5 +1,6 @@
 #pragma config(Sensor, in1,    analog1,        sensorAnalog)
 #pragma config(Sensor, dgtl1,  limitswitch,    sensorTouch)
+#pragma config(Sensor, dgtl5,  sonar,          sensorSONAR_cm)
 #pragma config(Sensor, dgtl10, digital10,      sensorDigitalOut)
 #pragma config(Sensor, dgtl11, digital11,      sensorDigitalOut)
 #pragma config(Sensor, dgtl12, digital12,      sensorDigitalOut)
@@ -133,6 +134,7 @@ void Move(){
 The GOBEACON main program essentially sets up all the configuration variables and repeatedly
 execute the three routines: Read_PD, find_max, and move.*/
 task main(){
+
 	// Shared config
 	ambient_level = 200;
 	slow_level = 5000;
@@ -146,6 +148,12 @@ task main(){
 	// --- Phase 1: Find RED beacon (1kHz) ---
 	freq = 0;
 	SensorValue[digital10] = freq;
+	motor[port7]=125;
+	wait1Msec(2000);
+	motor[port7]=-50;
+	wait1Msec(2000);
+	motor[port7]=125;
+	wait1Msec(2000);
 
 	while(true){
 		if(SensorValue[limitswitch] == 1){
@@ -159,16 +167,17 @@ task main(){
 	}
 		motor[port7]=127;
 		while(PD_sum > slow_level){
-			motor[port7]=-127;
+			motor[port7]=125;
 			wait1Msec(2000);
-			motor[port7]=59;
+			motor[port7]=-50;
 			wait1Msec(2000);
 			ReadPD();
 			Find_max();
 			wait1Msec(2000);
-		
+
 		}
-		motor[port7]=127;
+		motor[port7]=125; //resets arm
+		wait1Msec(2000);
 
 	// Brief pause before switching targets
 	delay(500);
@@ -189,6 +198,9 @@ task main(){
 		if(SensorValue[limitswitch] == 1){
 			stopMotor(leftMotor);
 			stopMotor(rightMotor);
+			motor[port7]=-59; //Grab green beacon
+			wait1Msec(2000);
+
 			break;
 		}
 		ReadPD();
@@ -196,26 +208,25 @@ task main(){
 		Move();
 	}
 
-	// --- Phase 3: Exit the Arena ---
-
-	#define OPENING_THRESHOLD 275
-	#define DRIVE_SPEED       50
+	#define OPENING_THRESHOLD 80
+	#define DRIVE_SPEED       30
 	#define SPIN_SPEED        30
-	#define EXIT_DRIVE_MS     2000  // drive forward for 2s once opening found
+	#define EXIT_DRIVE_MS     500  // drive forward for 2s once opening found
 
 	while(true){
-    	if(SensorValue[SonicSensor] >= OPENING_THRESHOLD){
+		
+    	if(SensorValue[sonar] >= OPENING_THRESHOLD || SensorValue[sonar]==0 || SensorValue[sonar]==-1){
         	// Opening detected — drive straight through
       	  motor[port1]  = DRIVE_SPEED;
       	  motor[port10] = -(DRIVE_SPEED);
       	  wait1Msec(EXIT_DRIVE_MS);
       	  motor[port1]  = 0;
       	  motor[port10] = 0;
-      	  break;  // done
+      	   // done
     	} else {
         	// Wall ahead — spin to search for opening
-        	motor[port1]  =  SPIN_SPEED;
-			motor[port10] = SPIN_SPEED;
+        	motor[port1]  =  -SPIN_SPEED;
+					motor[port10] = -SPIN_SPEED;
 		}
-    }
-}	
+}
+}
