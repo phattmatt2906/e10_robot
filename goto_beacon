@@ -136,25 +136,21 @@ execute the three routines: Read_PD, find_max, and move.*/
 task main(){
 
 	// Shared config
-	ambient_level = 200;
+	ambient_level = 250;
 	slow_level = 5000;
 	stop_level = 6000;
 	expose_time = 5;
-	steer_sensitivity = 20;
-	forward_speed = 35;
-	slow_speed = 25;
-	spin_speed = 50;
+	steer_sensitivity = 30;
+	forward_speed = 50;
+	slow_speed = 40;
+	spin_speed = 25;
 
 	// --- Phase 1: Find RED beacon (1kHz) ---
 	freq = 0;
 	SensorValue[digital10] = freq;
 	motor[port7]=125;
 	wait1Msec(2000);
-	motor[port7]=-50;
-	wait1Msec(2000);
-	motor[port7]=125;
-	wait1Msec(2000);
-
+	
 	while(true){
 		if(SensorValue[limitswitch] == 1){
 			stopMotor(leftMotor);
@@ -168,19 +164,18 @@ task main(){
 		motor[port7]=127;
 		while(PD_sum > slow_level){
 			motor[port7]=125;
-			wait1Msec(2000);
+			wait1Msec(500);
 			motor[port7]=-50;
-			wait1Msec(2000);
+			wait1Msec(500);
 			ReadPD();
 			Find_max();
-			wait1Msec(2000);
+			wait1Msec(2500);
 
 		}
 		motor[port7]=125; //resets arm
 		wait1Msec(2000);
 
 	// Brief pause before switching targets
-	delay(500);
 
 	// Back up slightly to clear the limit switch
 	motor[port1] = -70;
@@ -209,24 +204,27 @@ task main(){
 	}
 
 	#define OPENING_THRESHOLD 80
-	#define DRIVE_SPEED       30
-	#define SPIN_SPEED        30
+	#define DRIVE_SPEED       70
+	#define SPIN_SPEED        50
 	#define EXIT_DRIVE_MS     500  // drive forward for 2s once opening found
 
 	while(true){
-		
+
     	if(SensorValue[sonar] >= OPENING_THRESHOLD || SensorValue[sonar]==0 || SensorValue[sonar]==-1){
-        	// Opening detected — drive straight through
+        	// Opening detected ? drive straight through
       	  motor[port1]  = DRIVE_SPEED;
       	  motor[port10] = -(DRIVE_SPEED);
       	  wait1Msec(EXIT_DRIVE_MS);
       	  motor[port1]  = 0;
       	  motor[port10] = 0;
+      
+      	  
       	   // done
     	} else {
-        	// Wall ahead — spin to search for opening
+        	// Wall ahead ? spin to search for opening
         	motor[port1]  =  -SPIN_SPEED;
 					motor[port10] = -SPIN_SPEED;
 		}
 }
+
 }
